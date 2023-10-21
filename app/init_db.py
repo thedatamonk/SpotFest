@@ -27,4 +27,4 @@ def create_database(db_name, user, password, host="localhost", port="5432"):
         conn.close()
 
 # Usage
-create_database(db_name="spotfest_dev", user=config("DEFAULT_USER"), password=config("DEFAULT_PASSWORD"))
+create_database(db_name=config("DATABASE_NAME"), user=config("DEFAULT_USER"), password=config("DEFAULT_PASSWORD"))

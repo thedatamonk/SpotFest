@@ -2,6 +2,9 @@ from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, DateT
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 from decouple import config
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 Base = declarative_base()
@@ -17,6 +20,14 @@ class User(Base):
 
     rsvps = relationship("RSVP", back_populates="user")
     events = relationship("Event", back_populates="host")
+
+    def verify_password(self, plain_password):
+        return pwd_context.verify(plain_password, self.hashed_password)
+
+    @staticmethod
+    def get_password_hash(plain_password):
+        return pwd_context.hash(plain_password)
+    
 
 class Event(Base):
     __tablename__ = 'events'

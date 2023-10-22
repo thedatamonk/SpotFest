@@ -20,15 +20,15 @@ def signup(email: EmailStr = Form(...), password: str = Form(...), username: str
 
 
 @router.post("/login/")
-def login(email: EmailStr = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+def login(username: EmailStr = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
 
-    db_user = db.query(User).filter(User.email == email).first()
+    db_user = db.query(User).filter(User.email == username).first()
     if not db_user:
         raise HTTPException(status_code=400, detail='Email address not found')
     if not db_user.verify_password(password):
         raise HTTPException(status_code=400, detail="Incorrect password")
 
-    token = create_access_token(data={"sub": email})
+    token = create_access_token(data={"sub": username})
     return {"access_token": token, "token_type": "bearer"}
 
 

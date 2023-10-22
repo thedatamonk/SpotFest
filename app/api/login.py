@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Form
+from pydantic import EmailStr
 from sqlalchemy.orm import Session, sessionmaker
 import jwt
 from app.models.schemas import engine, User
@@ -46,12 +47,12 @@ def create_access_token(data: dict):
 
 
 @router.post("/signup/")
-def signup(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
+def signup(email: EmailStr = Form(...), password: str = Form(...), username: str = Form(...), db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    hashed_password = User.get_password_hash(user.password)
-    new_user = User(email=user.email, hashed_password=hashed_password, username=user.username)
+    hashed_password = User.get_password_hash(password)
+    new_user = User(email=email, hashed_password=hashed_password, username=username)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -59,9 +60,13 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login/")
-def login(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if not db_user or not db_user.verify_password(user.password):
-        raise HTTPException(status_code=400, detail="Incorrect email or password")
-    token = create_access_token(data={"sub": user.email})
+def login(email: EmailStr = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+
+    db_user = db.query(User).filter(User.email == email).first()
+    if not db_user:
+        raise HTTPException(status_code=400, detail='Email address not found')
+    if not db_user.verify_password(password):
+        raise HTTPException(status_code=400, detail="Incorrect password")
+
+    token = create_access_token(data={"sub": email})
     return {"access_token": token, "token_type": "bearer"}

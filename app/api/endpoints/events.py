@@ -6,7 +6,9 @@ from app.data_models.user import UserOut
 
 from app.api.deps import get_current_user, get_db
 
-from app.models.schemas import Event
+from app.models.schemas import Event, RSVP
+
+from typing import List
 
 
 router = APIRouter()
@@ -54,3 +56,37 @@ def delete_event(event_id: int, db: Session = Depends(get_db), current_user: Use
     db.delete(db_event)
     db.commit()
     return {"status": "Event deleted successfully"}
+
+
+@router.get("/events/", response_model=List[EventOut])
+def list_events(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    events = db.query(Event).offset(skip).limit(limit).all()
+    return events
+
+@router.post("/events/{event_id}/rsvp")
+def create_rsvp(event_id: int, db: Session = Depends(get_db), current_user: UserOut = Depends(get_current_user)):
+    existing_rsvp = db.query(RSVP).filter(RSVP.user_id == current_user.id, RSVP.event_id == event_id).first()
+
+    # If an RSVP already exists, raise an exception
+    if existing_rsvp:
+        raise HTTPException(status_code=400, detail="You have already RSVPed to this event")
+
+    rsvp = RSVP(user_id=current_user.id, event_id=event_id)
+    db.add(rsvp)
+    db.commit()
+    return {"message": "Event RSVPed successfully"}
+
+
+@router.get("/events/{event_id}/rsvps")
+def list_rsvps_for_event(event_id: int, db: Session = Depends(get_db)):
+    rsvps = db.query(RSVP).filter(RSVP.event_id == event_id).all()
+    return rsvps
+
+@router.delete("/events/{event_id}/rsvp")
+def cancel_rsvp(event_id: int, db: Session = Depends(get_db), current_user: UserOut = Depends(get_current_user)):
+    rsvp = db.query(RSVP).filter(RSVP.event_id == event_id, RSVP.user_id == current_user.id).first()
+    if not rsvp:
+        raise HTTPException(status_code=404, detail="RSVP not found")
+    db.delete(rsvp)
+    db.commit()
+    return {"message": "RSVP cancelled successfully."}

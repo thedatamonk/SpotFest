@@ -58,7 +58,7 @@ class RSVP(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'))
     event_id = Column(Integer, ForeignKey('events.id'))
-    attending = Column(Boolean, default=True)
+    # attending = Column(Boolean, default=True)
 
     user = relationship("User", back_populates="rsvps")
     event = relationship("Event", back_populates="rsvps")

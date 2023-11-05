@@ -74,13 +74,16 @@
             this.successMessage = '';
             if (this.isLogin) {
                 const response = await axios.post("/login", {email: this.email, password: this.password});
+                
+                localStorage.setItem('token', response.data.access_token);
                 this.successMessage = "Login successful!";
-                console.log(response);
-                return response;
+                this.$store.dispatch('logIn');
+
+                this.$router.push("/");
             } else {
                 const response = await axios.post("/signup", {email: this.email, password: this.password, username: this.username});
-                this.successMessage = 'Signup successful! Check your email to confirm your account.';
                 console.log(response);
+                this.successMessage = 'Signup successful! Check your email to confirm your account.';
                 this.$router.push("/login");
             }
 

@@ -17,6 +17,9 @@ class UserCreate(UserBase):
     password: str
     is_active: bool = True
 
-
+class UserUpdate(BaseModel):
+    password: str = None
+    username: str = None
+    
 class UserOut(UserBase):
     pass
